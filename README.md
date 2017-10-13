@@ -162,126 +162,46 @@ after the key type, followed by a space and then the value type.
 let capitals: [Country: City] = [sweden: stockholm]
 ```
 
-#### Only explicitly refer to `self` when required
+#### Explicitly refer to `self`, except when it adversely impacts readability
 
-When accessing properties or methods on `self`, leave the reference to `self` implicit by default:
+When accessing properties or methods on `self`, make the reference to `self` explicit by default:
 
 ```swift
 private class History {
 	var events: [Event]
 
 	func rewrite() {
-		events = []
+		self.events = []
 	}
 }
 ```
 
-Only include the explicit keyword when required by the language—for example, in a closure, or when parameter names conflict:
+Only omit the explicit keyword when it hinders readability:
 
 ```swift
-extension History {
-	init(events: [Event]) {
-		self.events = events
-	}
-
-	var whenVictorious: () -> () {
-		return {
-			self.rewrite()
-		}
+private class CustomView {
+	let subview = UIView()
+	let otherSubview = UIView()
+	let thirdSubview = UIView()
+	
+	init() {
+		[subview, otherSubview, thirdSubview].forEach(self.addSubview)
+		// looks much better than [self.subview, self.otherSubview, self.thirdSubview].forEach(self.addSubview)
 	}
 }
 ```
 
-_Rationale:_ This makes the capturing semantics of `self` stand out more in closures, and avoids verbosity elsewhere.
+_Rationale:_ This makes the semantics of instance vars more explicit, while the caveat that you can omit `self` at your discretion when it impacts readability allays verbosity concerns.
 
-#### Prefer structs over classes
+#### Decide whether to use structs or classes based on whether you want value semantics
 
 Unless you require functionality that can only be provided by a class (like identity or deinitializers), implement a struct instead.
 
 Note that inheritance is (by itself) usually _not_ a good reason to use classes, because polymorphism can be provided by protocols, and implementation reuse can be provided through composition.
 
-For example, this class hierarchy:
+However, note that _not_ using inheritance is also _not_ a good reason to use structs, as structs have value semantics, which can be expensive, and lead to unpleasant surprises.
 
-```swift
-class Vehicle {
-    let numberOfWheels: Int
-
-    init(numberOfWheels: Int) {
-        self.numberOfWheels = numberOfWheels
-    }
-
-    func maximumTotalTirePressure(pressurePerWheel: Float) -> Float {
-        return pressurePerWheel * Float(numberOfWheels)
-    }
-}
-
-class Bicycle: Vehicle {
-    init() {
-        super.init(numberOfWheels: 2)
-    }
-}
-
-class Car: Vehicle {
-    init() {
-        super.init(numberOfWheels: 4)
-    }
-}
-```
-
-could be refactored into these definitions:
-
-```swift
-protocol Vehicle {
-    var numberOfWheels: Int { get }
-}
-
-func maximumTotalTirePressure(vehicle: Vehicle, pressurePerWheel: Float) -> Float {
-    return pressurePerWheel * Float(vehicle.numberOfWheels)
-}
-
-struct Bicycle: Vehicle {
-    let numberOfWheels = 2
-}
-
-struct Car: Vehicle {
-    let numberOfWheels = 4
-}
-```
-
-_Rationale:_ Value types are simpler, easier to reason about, and behave as expected with the `let` keyword.
-
-#### Make classes `final` by default
-
-Classes should start as `final`, and only be changed to allow subclassing if a valid need for inheritance has been identified. Even in that case, as many definitions as possible _within_ the class should be `final` as well, following the same rules.
-
-_Rationale:_ Composition is usually preferable to inheritance, and opting _in_ to inheritance hopefully means that more thought will be put into the decision.
-
-
-#### Omit type parameters where possible
-
-Methods of parameterized types can omit type parameters on the receiving type when they’re identical to the receiver’s. For example:
-
-```swift
-struct Composite<T> {
-	…
-	func compose(other: Composite<T>) -> Composite<T> {
-		return Composite<T>(self, other)
-	}
-}
-```
-
-could be rendered as:
-
-```swift
-struct Composite<T> {
-	…
-	func compose(other: Composite) -> Composite {
-		return Composite(self, other)
-	}
-}
-```
-
-_Rationale:_ Omitting redundant type parameters clarifies the intent, and makes it obvious by contrast when the returned type takes different type parameters.
+_Rationale:_ If you understand value semantics, and can reason about both class and value types, you are better placed to make a decision than if we just made one arbitrary guideline.
 
 #### Use whitespace around operator definitions
 
@@ -301,11 +221,50 @@ func <|< <A>(lhs: A, rhs: A) -> A
 
 _Rationale:_ Operators consist of punctuation characters, which can make them difficult to read when immediately followed by the punctuation for a type or value parameter list. Adding whitespace separates the two more clearly.
 
-#### Translations
+#### Do not use extra spaces around method calls
 
-* [中文版](https://github.com/Artwalk/swift-style-guide/blob/master/README_CN.md)
-* [日本語版](https://github.com/jarinosuke/swift-style-guide/blob/master/README_JP.md)
-* [한국어판](https://github.com/minsOne/swift-style-guide/blob/master/README_KR.md)
-* [Versión en Español](https://github.com/antoniosejas/swift-style-guide/blob/spanish/README-ES.md)
-* [Versão em Português do Brasil](https://github.com/fernandocastor/swift-style-guide/blob/master/README-PTBR.md)
-* [فارسی](https://github.com/mohpor/swift-style-guide/blob/Persian/README-FA.md)
+Do not use extra spaces around the parentheses in method calls. Commas should have no space before, and one space after.
+
+**Undesirable**: 
+
+```sin ( a, b )```
+
+```sin( a, b )```
+
+```sin (a, b)```
+
+**Desirable**:
+
+```sin(a, b)```
+
+#### Use lowerCamelCase naming for all methods
+
+Including global functions.
+
+#### Do not abbreviate variable or method names unless they significantly impact readability
+
+Terseness does not confer any performance benefit. Xcode's fuzzy autocomplete is good enough that you can afford to name your variables with fully-readable names. If you are having readability issues because of long variable names, first check that you are not organizing poorly. For example, you may be tempted to write shorter variable names so you avoid lines like:
+
+```
+let transformIntoWorldSpace = ...
+let finalTransform = SCNMatrix4Mult(transformIntoWorldSpace, SCNMatrix4Rotate(SCNMatrix4Invert(SCNMatrix4Mult(cameraProjection, cameraTransform), Double.pi / 2, 0, 0, 1)))
+```
+
+If you rewrote it with shorter variable names, it would be much smaller and could read something like this:
+
+```
+let tw = ...
+let t = SCNMatrix4Mult(tw, SCNMatrix4Rotate(SCNMatrix4Invert(SCNMatrix4Mult(cp, ct), Double.pi / 2, 0, 0, 1)))
+```
+
+But realistically, you should first check if you can fix this by refactoring the code itself:
+
+```
+let transformIntoWorldSpace = ...
+let composedCameraTransform = SCNMatrix4Mult(cameraProjection, cameraTransform)
+let landscapeTransformFromCamera = SCNMatrix4Invert(composedCameraTransform)
+let portraitTransformFromCamera = SCNMatrix4Rotate(landscapeTransformFromCamera, Double.pi / 2, 0, 0, 1)
+let finalTransform = SCNMatrix4Mult(transformIntoWorldSpace, portraitTransformFromCamera)
+```
+
+The final code essentially documents itself and is significantly easier to reason about and refactor if needed.
