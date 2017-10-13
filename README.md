@@ -15,6 +15,10 @@ rough priority order):
  * Don’t leave trailing whitespace.
    * Not even leading indentation on blank lines.
 
+#### Method Naming Guidelines ####
+
+Refer to https://swift.org/documentation/api-design-guidelines/
+
 #### Prefer `let`-bindings over `var`-bindings wherever possible
 
 Use `let foo = …` over `var foo = …` wherever possible (and when in doubt). Only use `var` if you absolutely have to (i.e. you *know* that the value might change, e.g. when using the `weak` storage modifier).
