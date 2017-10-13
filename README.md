@@ -6,18 +6,12 @@ rough priority order):
  1. Increased rigor, and decreased likelihood of programmer error
  1. Increased clarity of intent
  1. Reduced verbosity
- 1. Fewer debates about aesthetics
-
-If you have suggestions, please see our [contribution guidelines](CONTRIBUTING.md),
-then open a pull request. :zap:
-
-----
 
 #### Whitespace
 
- * Tabs, not spaces.
+ * Just use the default editor settings in Xcode.
  * End files with a newline.
- * Make liberal use of vertical whitespace to divide code into logical chunks.
+ * Make liberal, but not overbearing, use of vertical whitespace to divide code into logical chunks.
  * Don’t leave trailing whitespace.
    * Not even leading indentation on blank lines.
 
