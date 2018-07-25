@@ -11,7 +11,7 @@ rough priority order):
 
  * Just use the default editor settings in Xcode.
  * End files with a newline.
- * Make liberal, but not overbearing, use of vertical whitespace to divide code into logical chunks.
+ * Make concise use of vertical whitespace to divide code into logical chunks. Prefer MARK comments over multiple newlines, to denote sections.
  * Don’t leave trailing whitespace.
    * Not even leading indentation on blank lines.
 
@@ -25,7 +25,7 @@ Use `let foo = …` over `var foo = …` wherever possible (and when in doubt). 
 
 _Rationale:_ The intent and meaning of both keywords are clear, but *let-by-default* results in safer and clearer code.
 
-A `let`-binding guarantees and *clearly signals to the programmer* that its value will never change. Subsequent code can thus make stronger assumptions about its usage.
+A `let`-binding guarantees and *clearly signals to the programmer* that its value will never change. Subsequent code can thus make stronger assumptions about its usage, especially with value types.
 
 It becomes easier to reason about code. Had you used `var` while still making the assumption that the value never changed, you would have to manually check that.
 
@@ -189,7 +189,9 @@ private class CustomView {
 }
 ```
 
-_Rationale:_ This makes the semantics of instance vars more explicit, while the caveat that you can omit `self` at your discretion when it impacts readability allays verbosity concerns.
+_Rationale:_ This makes the semantics of instance vars more explicit, while the caveat that you can omit `self` at your discretion when it impacts readability allays verbosity concerns. 
+
+**You can be liberal with the "adversely impacts readability" rule.** However, when writing instance variables, you should generally explicitly specify `self` as that will prevent any potenetial issues with in-scope name shadowing, and generally should not introduce verbosity the way variable reads do.
 
 #### Decide whether to use structs or classes based on whether you want value semantics
 
@@ -235,9 +237,29 @@ Do not use extra spaces around the parentheses in method calls. Commas should ha
 
 ```sin(a, b)```
 
-#### Use lowerCamelCase naming for all methods
+#### Use lowerCamelCase naming for all methods and variables, but namespace when it makes sense
 
-Including global functions.
+Prefer to use lowerCamelCase naming for all methods and variables, even global functions, constants, and global variables.
+
+However, when you have several variables that have the same role within a few different concepts, e.g. model, view, and projection matrices for two cameras, feel free to use snake case to break them up and namespace them.
+
+`sceneSpace_modelViewProjectionMatrix` and `screenSpace_modelViewProjectionMatrix` 
+
+read better than:
+
+`sceneSpaceModelViewProjectionMatrix` and `screenSpaceModelViewProjectionMatrix`.
+
+Generally this exception should only be made in graphics and algorithm code. Consider a GPU operation where you are operating on groups of images at two or three defined resolutions (e.g. to save on heavier kernel execution time by making heavier kernels execute on downscaled textures). You may want to define a variable naming scheme that reads like this:
+
+```swift
+let upscaled_brightmapTexture = ...
+let downscaled_blurTexture = ...
+let downscaled_brightmapTexture = ...
+let upscaled_brightmapTexture = ...
+let upscaled_finalTexture = ...
+```
+
+In this scheme, the snake case helps to group the textures and allows the user to determine which textures have similarity across groups, drastically reducing the potential for programmer error when changing code in the future. 
 
 #### Do not abbreviate variable or method names unless they significantly impact readability
 
